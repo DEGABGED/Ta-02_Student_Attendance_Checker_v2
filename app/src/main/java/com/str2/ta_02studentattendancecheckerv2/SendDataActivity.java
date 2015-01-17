@@ -42,6 +42,7 @@ public class SendDataActivity extends ActionBarActivity {
     static String scope = "oauth2:https://spreadsheets.google.com/feeds";
     static SpreadsheetService sheetService;
     static CharSequence[] sheets;
+    static SheetEdit se;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,7 +154,7 @@ public class SendDataActivity extends ActionBarActivity {
                     Log.i(TAG, token);
 
                     try {
-                        SheetEdit se = new SheetEdit(sheetService, new PrintStream(System.out));
+                        se = new SheetEdit(sheetService, new PrintStream(System.out));
                         List sheetlist = se.getSheetList();
                         sheets = new CharSequence[sheetlist.size()];
                         for (int j = 0; j < sheetlist.size(); j++) {
@@ -189,7 +190,24 @@ public class SendDataActivity extends ActionBarActivity {
         }
     }
 
-    public void showSheetChoiceDialog(){
+    public static void onSheetChoose(final int index){
+        Log.i(TAG, "onSheetChoose: "+sheets[index]);
+        Thread thr = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    se.loadSheet(index, 0);
+                    se.setCell(3, 5, "E3");
+                } catch (ServiceException serex){
+                    Log.e(TAG, "A service exception occurred");
+                    Log.i(TAG, serex.toString());
+                } catch (IOException io){
+                    Log.e(TAG, "An IO exception occurred");
+                    Log.i(TAG, io.toString());
+                }
+            }
+        });
+        thr.start();
 
     }
 

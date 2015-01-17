@@ -24,6 +24,7 @@ public class SheetChoiceDialogFragment extends DialogFragment{
                 .setItems(spreadsheets, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         Log.i("SheetChoice", "Chosen sheet is: "+spreadsheets[which]);
+                        SendDataActivity.onSheetChoose(which);
                     }
                 });
         return builder.create();

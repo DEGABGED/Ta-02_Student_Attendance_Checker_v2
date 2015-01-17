@@ -138,21 +138,18 @@ public class SheetEdit {
      * user which spreadsheet to load. If the selected spreadsheet has multiple
      * worksheets then the user will also be prompted to select what sheet to use.
      *
-     * @param reader to read input from the keyboard
      * @throws ServiceException when the request causes an error in the Google
      *         Spreadsheets service.
      * @throws IOException when an error occurs in communication with the Google
      *         Spreadsheets service.
      *
      */
-    public void loadSheet(BufferedReader reader) throws IOException,
+    public void loadSheet(int spreadsheetIndex, int worksheetIndex) throws IOException,
             ServiceException {
         // Get the spreadsheet to load
         SpreadsheetFeed feed = service.getFeed(factory.getSpreadsheetsFeedUrl(),
                 SpreadsheetFeed.class);
         List spreadsheets = feed.getEntries();
-        int spreadsheetIndex = getIndexFromUser(reader, spreadsheets,
-                "spreadsheet");
         SpreadsheetEntry spreadsheet = feed.getEntries().get(spreadsheetIndex);
 
         // Get the worksheet to load
@@ -160,12 +157,10 @@ public class SheetEdit {
             cellFeedUrl = spreadsheet.getWorksheets().get(0).getCellFeedUrl();
         } else {
             List worksheets = spreadsheet.getWorksheets();
-            int worksheetIndex = getIndexFromUser(reader, worksheets, "worksheet");
             WorksheetEntry worksheet = (WorksheetEntry) worksheets
                     .get(worksheetIndex);
             cellFeedUrl = worksheet.getCellFeedUrl();
         }
-        System.out.println("Sheet loaded.");
     }
 
     public String showSheet(int index, List spreadsheets) throws IOException,
@@ -200,7 +195,6 @@ public class SheetEdit {
 
         CellEntry newEntry = new CellEntry(row, col, formulaOrValue);
         service.insert(cellFeedUrl, newEntry);
-        out.println("Added!");
     }
 
     /**
@@ -392,84 +386,6 @@ public class SheetEdit {
         }
         if (isSuccess) {
             System.out.println("Batch operations successful.");
-        }
-    }
-
-    /**
-     * Reads and executes one command.
-     *
-     * @param reader to read input from the keyboard
-     * @return false if the user quits, true on exception
-     */
-    public boolean executeCommand(BufferedReader reader) {
-        for (String s : COMMAND_HELP_MESSAGE) {
-            out.println(s);
-        }
-
-        System.err.print("Command: ");
-
-        try {
-            String command = reader.readLine();
-            String[] parts = command.trim().split(" ", 2);
-            String name = parts[0];
-            String parameters = parts.length > 1 ? parts[1] : "";
-
-            if (name.equals("list")) {
-                showAllCells();
-            } else if (name.equals("load")) {
-                loadSheet(reader);
-            } else if (name.equals("search")) {
-                search(parameters);
-            } else if (name.equals("range")) {
-                String[] s = parameters.split(" ", 4);
-                showRange(Integer.parseInt(s[0]), Integer.parseInt(s[1]), Integer
-                        .parseInt(s[2]), Integer.parseInt(s[3]));
-            } else if (name.equals("set")) {
-                String[] s = parameters.split(" ", 3);
-                setCell(Integer.parseInt(s[0]), Integer.parseInt(s[1]), s[2]);
-            } else if (name.equals("batch")) {
-                processBatchRequest(reader);
-            } else if (name.startsWith("q") || name.startsWith("exit")) {
-                return false;
-            } else {
-                out.println("Unknown command.");
-            }
-        } catch (Exception e) {
-
-            // Show *exactly* what went wrong.
-            e.printStackTrace();
-        }
-        return true;
-    }
-
-    /**
-     * Starts up the demo and prompts for commands.
-     *
-     * @param username name of user to authenticate (e.g. yourname@gmail.com)
-     * @param password password to use for authentication
-     * @throws AuthenticationException if the service is unable to validate the
-     *         username and password.
-     */
-    public void run(String username, String password)
-            throws AuthenticationException {
-        for (String s : WELCOME_MESSAGE) {
-            out.println(s);
-        }
-
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(System.in));
-
-        // Login and prompt the user to pick a sheet to use.
-        login(username, password);
-        try {
-            loadSheet(reader);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        }
-
-        while (executeCommand(reader)) {
         }
     }
 
