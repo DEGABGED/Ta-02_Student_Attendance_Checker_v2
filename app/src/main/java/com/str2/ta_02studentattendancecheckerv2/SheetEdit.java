@@ -4,6 +4,8 @@ package com.str2.ta_02studentattendancecheckerv2;
  * Created by The Administrator on 1/8/2015.
  */
 
+import android.util.Log;
+
 import com.google.gdata.client.spreadsheet.CellQuery;
 import com.google.gdata.client.spreadsheet.FeedURLFactory;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
@@ -14,6 +16,8 @@ import com.google.gdata.data.batch.BatchStatus;
 import com.google.gdata.data.batch.BatchUtils;
 import com.google.gdata.data.spreadsheet.CellEntry;
 import com.google.gdata.data.spreadsheet.CellFeed;
+import com.google.gdata.data.spreadsheet.ListEntry;
+import com.google.gdata.data.spreadsheet.ListFeed;
 import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
 import com.google.gdata.data.spreadsheet.SpreadsheetFeed;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
@@ -63,6 +67,9 @@ public class SheetEdit {
 
     /** The URL of the cells feed. */
     private URL cellFeedUrl;
+
+    /** The URL of the lists feed. */
+    private URL listFeedUrl;
 
     /** The output stream. */
     private PrintStream out;
@@ -147,10 +154,11 @@ public class SheetEdit {
     public void loadWorksheet(SpreadsheetEntry spreadsheet, int worksheetIndex) throws IOException,
             ServiceException {
         // Get the worksheet to load
-            List worksheets = spreadsheet.getWorksheets();
-            WorksheetEntry worksheet = (WorksheetEntry) worksheets
-                    .get(worksheetIndex);
-            cellFeedUrl = worksheet.getCellFeedUrl();
+        List worksheets = spreadsheet.getWorksheets();
+        WorksheetEntry worksheet = (WorksheetEntry) worksheets
+                .get(worksheetIndex);
+        cellFeedUrl = worksheet.getCellFeedUrl();
+        listFeedUrl = worksheet.getListFeedUrl();
     }
 
     public SpreadsheetEntry loadSpreadsheet(int spreadsheetIndex) throws IOException,
@@ -164,6 +172,24 @@ public class SheetEdit {
             ServiceException {
         BaseEntry entry = (BaseEntry) spreadsheets.get(index);
         return (entry.getTitle().getPlainText());
+    }
+
+    public void showRows() throws
+            IOException, ServiceException {
+        ListFeed listFeed = service.getFeed(listFeedUrl, ListFeed.class);
+
+        // Iterate through each row, printing its cell values.
+        for (ListEntry row : listFeed.getEntries()) {
+            String rowtext = "";
+            // Print the first column's cell value
+            rowtext += row.getTitle().getPlainText() + "\t";
+            // Iterate over the remaining columns, and print each cell value
+            for (String tag : row.getCustomElements().getTags()) {
+                rowtext += row.getCustomElements().getValue(tag) + "\t";
+            }
+
+            Log.i("Row", rowtext);
+        }
     }
 
     public List getSheetList() throws IOException,
@@ -197,6 +223,10 @@ public class SheetEdit {
     public void setCell(CellEntry cellEntry)
             throws IOException, ServiceException {
         service.insert(cellFeedUrl, cellEntry);
+    }
+
+    public void setRow(ListEntry row) throws IOException, ServiceException{
+        row = service.insert(listFeedUrl, row);
     }
 
     /**

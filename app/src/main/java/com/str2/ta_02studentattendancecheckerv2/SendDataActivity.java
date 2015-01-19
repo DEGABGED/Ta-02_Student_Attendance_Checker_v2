@@ -24,6 +24,7 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.spreadsheet.CellEntry;
+import com.google.gdata.data.spreadsheet.ListEntry;
 import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
 import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ServiceException;
@@ -201,6 +202,7 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     if(spreadsheet.getWorksheets().size() == 1){
                         se.loadWorksheet(spreadsheet, 0);
                         writeOnSheet();
+                        se.showRows();
                     } else {
                         List worksheets = spreadsheet.getWorksheets();
                         wsheets = new CharSequence[worksheets.size()];
@@ -226,6 +228,7 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 try {
                     se.loadWorksheet(spreadsheet, index);
                     writeOnSheet();
+                    se.showRows();
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");
                     Log.i(TAG, serex.toString());
@@ -291,13 +294,16 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
             @Override
             public void run() {
                 try {
-                    int row = 3;
-                    int col = 3;
                     Date date = new Date();
                     DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
-                    Log.i("Time", df.format(date));
-                    CellEntry cellEntry = new CellEntry(row, col, df.format(date));
-                    se.setCell(cellEntry);
+                    String time = df.format(date);
+                    Log.i("Time", time);
+                    ListEntry row = new ListEntry();
+                    row.getCustomElements().setValueLocal("Timestamp", time);
+                    row.getCustomElements().setValueLocal("Name", "Francis dela Cruz");
+                    row.getCustomElements().setValueLocal("ClassNumber", "08");
+                    row.getCustomElements().setValueLocal("Section", "Tau");
+                    se.setRow(row);
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");
                     Log.i(TAG, serex.toString());
@@ -308,7 +314,6 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
             }
         });
         thr.start();
-
     }
 
     public void onAccChooseClick(View view){
