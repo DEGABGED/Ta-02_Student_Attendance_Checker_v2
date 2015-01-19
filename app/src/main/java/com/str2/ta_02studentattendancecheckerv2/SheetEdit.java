@@ -144,23 +144,20 @@ public class SheetEdit {
      *         Spreadsheets service.
      *
      */
-    public void loadSheet(int spreadsheetIndex, int worksheetIndex) throws IOException,
+    public void loadWorksheet(SpreadsheetEntry spreadsheet, int worksheetIndex) throws IOException,
             ServiceException {
-        // Get the spreadsheet to load
-        SpreadsheetFeed feed = service.getFeed(factory.getSpreadsheetsFeedUrl(),
-                SpreadsheetFeed.class);
-        List spreadsheets = feed.getEntries();
-        SpreadsheetEntry spreadsheet = feed.getEntries().get(spreadsheetIndex);
-
         // Get the worksheet to load
-        if (spreadsheet.getWorksheets().size() == 1) {
-            cellFeedUrl = spreadsheet.getWorksheets().get(0).getCellFeedUrl();
-        } else {
             List worksheets = spreadsheet.getWorksheets();
             WorksheetEntry worksheet = (WorksheetEntry) worksheets
                     .get(worksheetIndex);
             cellFeedUrl = worksheet.getCellFeedUrl();
-        }
+    }
+
+    public SpreadsheetEntry loadSpreadsheet(int spreadsheetIndex) throws IOException,
+            ServiceException {
+        SpreadsheetFeed feed = service.getFeed(factory.getSpreadsheetsFeedUrl(),
+                SpreadsheetFeed.class);
+        return feed.getEntries().get(spreadsheetIndex);
     }
 
     public String showSheet(int index, List spreadsheets) throws IOException,
@@ -195,6 +192,11 @@ public class SheetEdit {
 
         CellEntry newEntry = new CellEntry(row, col, formulaOrValue);
         service.insert(cellFeedUrl, newEntry);
+    }
+
+    public void setCell(CellEntry cellEntry)
+            throws IOException, ServiceException {
+        service.insert(cellFeedUrl, cellEntry);
     }
 
     /**

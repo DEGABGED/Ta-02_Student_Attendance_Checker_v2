@@ -23,15 +23,21 @@ import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
+import com.google.gdata.data.spreadsheet.CellEntry;
+import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
 import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ServiceException;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.security.cert.Certificate;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 
-public class SendDataActivity extends ActionBarActivity {
+public class SendDataActivity extends ActionBarActivity implements SheetChoiceDialogFragment.SheetChoiceDialogListener {
 
     static final int REQUEST_CODE_PICK_ACCOUNT = 1;
     static final int REQUEST_CODE_RECOVER_FROM_PLAY_SERVICES_ERROR = 2;
@@ -41,8 +47,10 @@ public class SendDataActivity extends ActionBarActivity {
     static String email;
     static String scope = "oauth2:https://spreadsheets.google.com/feeds";
     static SpreadsheetService sheetService;
-    static CharSequence[] sheets;
+    static CharSequence[] sheets, wsheets;
     static SheetEdit se;
+    static SpreadsheetEntry spreadsheet;
+    static int sheetIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +99,9 @@ public class SendDataActivity extends ActionBarActivity {
                 email = data.getStringExtra(android.accounts.AccountManager.KEY_ACCOUNT_NAME);
                 // With the account name acquired, go get the auth token
                 Log.i(TAG, "Account is chosen");
+                Toast.makeText(this.getApplicationContext(),
+                        "Account has been chosen. Please wait for a dialog to pop up for choosing the destination spreadsheet.",
+                        Toast.LENGTH_SHORT).show();
                 new GetUsernameTask(SendDataActivity.this, email, scope).execute();
             } else if (resultCode == RESULT_CANCELED) {
                 // The account picker dialog closed without selecting an account.
@@ -152,33 +163,8 @@ public class SendDataActivity extends ActionBarActivity {
                             .authorizationHeaderAccessMethod())
                             .setFromTokenResponse(new TokenResponse().setAccessToken(token)));
                     Log.i(TAG, token);
-
-                    try {
-                        se = new SheetEdit(sheetService, new PrintStream(System.out));
-                        List sheetlist = se.getSheetList();
-                        sheets = new CharSequence[sheetlist.size()];
-                        for (int j = 0; j < sheetlist.size(); j++) {
-                            sheets[j] = se.showSheet(j, sheetlist);
-                            Log.i("Sheetlist", se.showSheet(j, sheetlist));
-                        }
-
-                        DialogFragment dfrag = new SheetChoiceDialogFragment();
-                        SheetChoiceDialogFragment.setSheetlist(sheets);
-                        dfrag.show(getFragmentManager(), "Tag");
-
-                    } catch (AuthenticationException authEx){
-                        Log.e(TAG, "An Auth Exception occurred", authEx);
-                        Log.i(TAG, Log.getStackTraceString(authEx));
-                    } catch (IOException io){
-                        Log.i(TAG, "An IOException occurred");
-                        Log.i(TAG, io.toString());
-                    } catch (ServiceException se){
-                        Log.i(TAG, "A Service Exception occurred");
-                        Log.i(TAG, se.toString());
-                    } catch (Exception e){
-                        Log.i(TAG, "A different exception occurred");
-                        Log.i(TAG, e.toString());
-                    }
+                    se = new SheetEdit(sheetService, new PrintStream(System.out));
+                    chooseSpreadsheet();
                 }
             } catch (IOException e) {
                 // The fetchToken() method handles Google-specific exceptions,
@@ -190,14 +176,128 @@ public class SendDataActivity extends ActionBarActivity {
         }
     }
 
-    public static void onSheetChoose(final int index){
-        Log.i(TAG, "onSheetChoose: "+sheets[index]);
+    @Override
+    public void onSheetClick(DialogFragment dialog, boolean isSpreadsheet, int index) {
+        new ChooseWorksheetTask(isSpreadsheet, index).execute();
+    }
+
+    public class ChooseWorksheetTask extends AsyncTask<Void, Void, Void>{
+        boolean isSpreadsheet;
+        int index;
+
+        ChooseWorksheetTask(boolean isSpreadsheet, int index){
+            this.isSpreadsheet = isSpreadsheet;
+            this.index = index;
+        }
+
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if(isSpreadsheet){
+                //it's a spreadsheet; check for worksheets
+                try {
+                    spreadsheet = se.loadSpreadsheet(index);
+                    Log.i(TAG, "Spreadsheet chosen: " + sheets[index]);
+                    if(spreadsheet.getWorksheets().size() == 1){
+                        se.loadWorksheet(spreadsheet, 0);
+                        writeOnSheet();
+                    } else {
+                        List worksheets = spreadsheet.getWorksheets();
+                        wsheets = new CharSequence[worksheets.size()];
+                        for (int j = 0; j < worksheets.size(); j++) {
+                            wsheets[j] = se.showSheet(j, worksheets);
+                            Log.i("Sheetlist", se.showSheet(j, worksheets));
+                        }
+
+                        DialogFragment dfrag = new SheetChoiceDialogFragment();
+                        SheetChoiceDialogFragment.setSheetlist(wsheets);
+                        SheetChoiceDialogFragment.isSpreadsheet = false;
+                        dfrag.show(getFragmentManager(), "Tag");
+                    }
+                } catch (ServiceException serex){
+                    Log.e(TAG, "A service exception occurred");
+                    Log.i(TAG, serex.toString());
+                } catch (IOException io){
+                    Log.e(TAG, "An IO exception occurred");
+                    Log.i(TAG, io.toString());
+                }
+            } else {
+                //it's a worksheet; start writing
+                try {
+                    se.loadWorksheet(spreadsheet, index);
+                    writeOnSheet();
+                } catch (ServiceException serex){
+                    Log.e(TAG, "A service exception occurred");
+                    Log.i(TAG, serex.toString());
+                } catch (IOException io){
+                    Log.e(TAG, "An IO exception occurred");
+                    Log.i(TAG, io.toString());
+                }
+            }
+            return null;
+        }
+    }
+
+    public void chooseSpreadsheet(){
+        try {
+            List sheetlist = se.getSheetList();
+            sheets = new CharSequence[sheetlist.size()];
+            for (int j = 0; j < sheetlist.size(); j++) {
+                sheets[j] = se.showSheet(j, sheetlist);
+                Log.i("Sheetlist", se.showSheet(j, sheetlist));
+            }
+
+            DialogFragment dfrag = new SheetChoiceDialogFragment();
+            SheetChoiceDialogFragment.setSheetlist(sheets);
+            SheetChoiceDialogFragment.isSpreadsheet = true;
+            dfrag.show(getFragmentManager(), "Tag");
+        } catch (ServiceException serex){
+            Log.e(TAG, "A service exception occurred");
+            Log.i(TAG, serex.toString());
+        } catch (IOException io){
+            Log.e(TAG, "An IO exception occurred");
+            Log.i(TAG, io.toString());
+        }
+    }
+
+    /*
+    public static void chooseWorksheet(){
+        try {
+            spreadsheet = se.loadSpreadsheet(sheetIndex);
+            Log.i(TAG, "onSheetChoose: "+sheets[sheetIndex]);
+            if(spreadsheet.getWorksheets().size() == 1){
+                sheetIndex = 0;
+                writeOnSheet();
+            } else {
+                List worksheets = spreadsheet.getWorksheets();
+                wsheets = new CharSequence[worksheets.size()];
+                for (int j = 0; j < worksheets.size(); j++) {
+                    wsheets[j] = se.showSheet(j, worksheets);
+                    Log.i("Sheetlist", se.showSheet(j, worksheets));
+                }
+            }
+        } catch (ServiceException serex){
+            Log.e(TAG, "A service exception occurred");
+            Log.i(TAG, serex.toString());
+        } catch (IOException io){
+            Log.e(TAG, "An IO exception occurred");
+            Log.i(TAG, io.toString());
+        }
+    }
+    */
+
+    public static void writeOnSheet(){
         Thread thr = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    se.loadSheet(index, 0);
-                    se.setCell(3, 5, "E3");
+                    int row = 3;
+                    int col = 3;
+                    Date date = new Date();
+                    DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+                    Log.i("Time", df.format(date));
+                    CellEntry cellEntry = new CellEntry(row, col, df.format(date));
+                    se.setCell(cellEntry);
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");
                     Log.i(TAG, serex.toString());
@@ -218,9 +318,11 @@ public class SendDataActivity extends ActionBarActivity {
                     accountTypes, false, null, null, null, null);
             Log.i(TAG, "Account Picker Intent will be sent");
             startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
-
         } else {
             Log.i(TAG, "Not connected to Internet");
+            Toast.makeText(this.getApplicationContext(),
+                    "Not connected to Internet.",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 }
