@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.GoogleAuthException;
@@ -38,7 +39,8 @@ import java.util.Date;
 import java.util.List;
 
 
-public class SendDataActivity extends ActionBarActivity implements SheetChoiceDialogFragment.SheetChoiceDialogListener {
+public class SendDataActivity extends ActionBarActivity implements SheetChoiceDialogFragment.SheetChoiceDialogListener,
+        SendFinishedDialogFragment.SendFinishedDialogListener {
 
     static final int REQUEST_CODE_PICK_ACCOUNT = 1;
     static final int REQUEST_CODE_RECOVER_FROM_PLAY_SERVICES_ERROR = 2;
@@ -51,12 +53,17 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
     static CharSequence[] sheets, wsheets;
     static SheetEdit se;
     static SpreadsheetEntry spreadsheet;
-    static int sheetIndex;
+
+    static TextView nEmail;
+    static TextView nSpreadsheet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_send_data);
+
+        nEmail = (TextView) findViewById(R.id.nEmail);
+        nSpreadsheet = (TextView) findViewById(R.id.nSpreadsheet);
     }
 
 
@@ -100,6 +107,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 email = data.getStringExtra(android.accounts.AccountManager.KEY_ACCOUNT_NAME);
                 // With the account name acquired, go get the auth token
                 Log.i(TAG, "Account is chosen");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        nEmail.setText(nEmail.getText() + email);
+                    }
+                });
                 Toast.makeText(this.getApplicationContext(),
                         "Account has been chosen. Please wait for a dialog to pop up for choosing the destination spreadsheet.",
                         Toast.LENGTH_SHORT).show();
@@ -118,6 +131,13 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 onAccChooseClick(null);
             }
         }
+    }
+
+    @Override
+    public void onGoBack(DialogFragment dialog) {
+        Intent i = new Intent(getApplicationContext(), HomeActivity.class);
+        startActivity(i);
+        finish();
     }
 
     public class GetUsernameTask extends AsyncTask<String, Void, Void> {
@@ -179,6 +199,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
 
     @Override
     public void onSheetClick(DialogFragment dialog, boolean isSpreadsheet, int index) {
+        if(isSpreadsheet) {
+                    nSpreadsheet.setText(nSpreadsheet.getText() + "" + sheets[index]);
+            Toast.makeText(this.getApplicationContext(),
+                    "Spreadsheet has been chosen. Please wait in case a worksheet requires to be chosen.",
+                    Toast.LENGTH_SHORT).show();
+        }
         new ChooseWorksheetTask(isSpreadsheet, index).execute();
     }
 
@@ -201,7 +227,7 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     Log.i(TAG, "Spreadsheet chosen: " + sheets[index]);
                     if(spreadsheet.getWorksheets().size() == 1){
                         se.loadWorksheet(spreadsheet, 0);
-                        writeOnSheet();
+                        //writeOnSheet();
                         se.showRows();
                     } else {
                         List worksheets = spreadsheet.getWorksheets();
@@ -227,7 +253,7 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 //it's a worksheet; start writing
                 try {
                     se.loadWorksheet(spreadsheet, index);
-                    writeOnSheet();
+                    //writeOnSheet();
                     se.showRows();
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");
@@ -289,7 +315,7 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
     }
     */
 
-    public static void writeOnSheet(){
+    public void writeOnSheet(View view){
         Thread thr = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -300,10 +326,13 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     Log.i("Time", time);
                     ListEntry row = new ListEntry();
                     row.getCustomElements().setValueLocal("Timestamp", time);
-                    row.getCustomElements().setValueLocal("Name", "Francis dela Cruz");
-                    row.getCustomElements().setValueLocal("ClassNumber", "08");
-                    row.getCustomElements().setValueLocal("Section", "Tau");
+                    row.getCustomElements().setValueLocal("Name", "ecchilerd");
+                    row.getCustomElements().setValueLocal("ClassNumber", "01");
+                    row.getCustomElements().setValueLocal("Section", "trut");
                     se.setRow(row);
+
+                    DialogFragment dfrag = new SendFinishedDialogFragment();
+                    dfrag.show(getFragmentManager(), "Tag");
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");
                     Log.i(TAG, serex.toString());

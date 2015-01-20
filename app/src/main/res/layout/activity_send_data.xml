@@ -10,9 +10,58 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Choose Account"
+        android:text="Choose Account and Sheet"
         android:id="@+id/button2"
-        android:layout_centerVertical="true"
+        android:onClick="onAccChooseClick"
+        android:layout_below="@+id/msg"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Please verify the data before sending it."
+        android:id="@+id/msg"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:onClick="onAccChooseClick"/>
+        android:textAlignment="center" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="email: "
+        android:id="@+id/nEmail"
+        android:layout_above="@+id/nSpreadsheet"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="spreadsheet: "
+        android:id="@+id/nSpreadsheet"
+        android:layout_above="@+id/nWorksheet"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="worksheet: "
+        android:id="@+id/nWorksheet"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send"
+        android:id="@+id/sendButton"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="writeOnSheet" />
 </RelativeLayout>
