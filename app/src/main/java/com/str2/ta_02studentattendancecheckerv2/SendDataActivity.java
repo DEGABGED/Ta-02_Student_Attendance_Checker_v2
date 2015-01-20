@@ -40,7 +40,7 @@ import java.util.List;
 
 
 public class SendDataActivity extends ActionBarActivity implements SheetChoiceDialogFragment.SheetChoiceDialogListener,
-        SendFinishedDialogFragment.SendFinishedDialogListener {
+        ActionCompleteDialogFragment.ActionCompleteDialogListener {
 
     static final int REQUEST_CODE_PICK_ACCOUNT = 1;
     static final int REQUEST_CODE_RECOVER_FROM_PLAY_SERVICES_ERROR = 2;
@@ -326,12 +326,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     Log.i("Time", time);
                     ListEntry row = new ListEntry();
                     row.getCustomElements().setValueLocal("Timestamp", time);
-                    row.getCustomElements().setValueLocal("Name", "ecchilerd");
-                    row.getCustomElements().setValueLocal("ClassNumber", "01");
-                    row.getCustomElements().setValueLocal("Section", "trut");
+                    row.getCustomElements().setValueLocal("Name", "jkjkjj");
+                    row.getCustomElements().setValueLocal("ClassNumber", "0qq1");
+                    row.getCustomElements().setValueLocal("Section", "trddut");
                     se.setRow(row);
 
-                    DialogFragment dfrag = new SendFinishedDialogFragment();
+                    DialogFragment dfrag = new ActionCompleteDialogFragment();
                     dfrag.show(getFragmentManager(), "Tag");
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");

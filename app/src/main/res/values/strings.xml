@@ -8,5 +8,6 @@
     <string name="email_msg">Choose your Google Account</string>
     <string name="choose">Choose</string>
     <string name="sheet_msg">Next, choose the spreadsheet</string>
+    <string name="title_activity_log">LogActivity</string>
 
 </resources>
