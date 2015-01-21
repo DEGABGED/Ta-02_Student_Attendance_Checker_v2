@@ -9,8 +9,8 @@
     <Spinner
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/spinner"
-        android:layout_below="@+id/editText"
+        android:id="@+id/timeperiod"
+        android:layout_below="@+id/subjectname"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:spinnerMode="dropdown"/>
@@ -20,7 +20,7 @@
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/editText"
+        android:id="@+id/subjectname"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:text="sample text"
@@ -31,22 +31,24 @@
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/listView"
+        android:id="@+id/studentlist"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/spinner"
-        android:entries="@+id/Student1"
+        android:layout_below="@+id/timeperiod"
         android:layout_alignParentBottom="true" />
+
+    <!-- the listview element android:entries="@id/Student1" is causing an error. pls give me the resource for the Student1 -->
 
     <Button
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Store"
-        android:id="@+id/button5"
-        android:layout_alignTop="@+id/editText"
+        android:id="@+id/store"
+        android:layout_alignTop="@+id/subjectname"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:onClick="onStoreButtonClick"/>
 
     <!-- here will be student names which will be in checkedtextview which you will click to make him presents and shit
     unless we're going to make it separate textfield and them name spinners accordingly

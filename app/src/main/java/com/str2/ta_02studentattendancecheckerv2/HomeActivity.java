@@ -3,12 +3,21 @@ package com.str2.ta_02studentattendancecheckerv2;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class HomeActivity extends ActionBarActivity {
+    String TAG = "HomeActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +54,41 @@ public class HomeActivity extends ActionBarActivity {
         finish();
     }
 
-    public void onViewButtonClick(View view){
+    public void onSendButtonClick(View view){
         Intent i = new Intent(getApplicationContext(), SendDataActivity.class);
         startActivity(i);
         finish();
+    }
+
+    public void onViewButtonClick(View view){
+        //block of code to read a file
+        try{
+            FileInputStream fis = openFileInput(LogActivity.OUTPUTFILENAME);
+            ArrayList<Byte> bytearraylist = new ArrayList<Byte>();
+            int readInt = 0;
+            readInt = fis.read();
+            while (readInt >= 0) {
+                bytearraylist.add(Byte.valueOf((byte) readInt));
+                readInt = fis.read();
+            }
+
+            byte[] finalByteArray = new byte[bytearraylist.size()];
+            for(int i = 0; i < bytearraylist.size(); ++i){
+                finalByteArray[i] = bytearraylist.get(i);
+            }
+
+            String actualText = new String(finalByteArray, "UTF-8");
+            Log.i(TAG, Arrays.toString(finalByteArray));
+            Log.i(TAG, "Text in file: " + actualText);
+        } catch (FileNotFoundException fnfe){
+            Log.i(TAG, fnfe.toString());
+        } catch (IOException ioe){
+            Log.i(TAG, ioe.toString());
+        }
+    }
+
+    public void onResetClick(View view){
+        deleteFile(LogActivity.OUTPUTFILENAME);
+        Toast.makeText(this, "Local data deleted.", Toast.LENGTH_SHORT).show();
     }
 }

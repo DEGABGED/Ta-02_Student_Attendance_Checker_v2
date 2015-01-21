@@ -24,17 +24,18 @@ import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
-import com.google.gdata.data.spreadsheet.CellEntry;
 import com.google.gdata.data.spreadsheet.ListEntry;
 import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
-import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ServiceException;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -131,13 +132,6 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 onAccChooseClick(null);
             }
         }
-    }
-
-    @Override
-    public void onGoBack(DialogFragment dialog) {
-        Intent i = new Intent(getApplicationContext(), HomeActivity.class);
-        startActivity(i);
-        finish();
     }
 
     public class GetUsernameTask extends AsyncTask<String, Void, Void> {
@@ -265,6 +259,10 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
             }
             return null;
         }
+
+        protected void onPostExecute(){
+            Toast.makeText(SendDataActivity.this, "Data is ready to be sent.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void chooseSpreadsheet(){
@@ -319,17 +317,85 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
         Thread thr = new Thread(new Runnable() {
             @Override
             public void run() {
+                String actualText = "";
+                try{
+                    FileInputStream fis = openFileInput(LogActivity.OUTPUTFILENAME);
+                    ArrayList<Byte> bytearraylist = new ArrayList<Byte>();
+                    int readInt = 0;
+                    readInt = fis.read();
+                    while (readInt >= 0) {
+                        bytearraylist.add(Byte.valueOf((byte) readInt));
+                        readInt = fis.read();
+                    }
+
+                    byte[] finalByteArray = new byte[bytearraylist.size()];
+                    for(int i = 0; i < bytearraylist.size(); ++i){
+                        finalByteArray[i] = bytearraylist.get(i);
+                    }
+
+                    actualText = new String(finalByteArray, "UTF-8");
+                    Log.i(TAG, Arrays.toString(finalByteArray));
+                    Log.i(TAG, "Text in file: " + actualText);
+                } catch (FileNotFoundException fnfe){
+                    Log.i(TAG, fnfe.toString());
+                } catch (IOException ioe){
+                    Log.i(TAG, ioe.toString());
+                }
+
+                ArrayList<String> lines = new ArrayList<>();
+                int previousIndex = 0;
+                for(int i = actualText.indexOf("]"); i < actualText.length(); i++){
+                    if((actualText.charAt(i)+"").equals("]")){
+                        lines.add(actualText.substring(previousIndex, i+1));
+                        previousIndex = i+1;
+                    }
+                }
+
+                Log.i(TAG, "no. of lines is "+lines.size());
+
                 try {
-                    Date date = new Date();
-                    DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
-                    String time = df.format(date);
-                    Log.i("Time", time);
-                    ListEntry row = new ListEntry();
-                    row.getCustomElements().setValueLocal("Timestamp", time);
-                    row.getCustomElements().setValueLocal("Name", "jkjkjj");
-                    row.getCustomElements().setValueLocal("ClassNumber", "0qq1");
-                    row.getCustomElements().setValueLocal("Section", "trddut");
-                    se.setRow(row);
+                    for(int i = 0; i < lines.size(); i++) {
+                        String line = lines.get(i);
+                        String subject = line.substring(0, line.indexOf("_"));
+                        String period = line.substring(line.indexOf("_"), line.indexOf("_", line.indexOf("_")+1));
+                        String classlist = line.substring(line.indexOf("["), line.indexOf("]"));
+
+                        Date date = new Date();
+                        DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+                        String time = df.format(date);
+                        Log.i("Time", time);
+
+                        ListEntry row = new ListEntry();
+                        row.getCustomElements().setValueLocal("Timestamp", time);
+                        row.getCustomElements().setValueLocal("Subject", subject);
+                        row.getCustomElements().setValueLocal("Period", period);
+
+                        int cn = 0;
+                        for(int j = 0; j < classlist.length(); j++){
+                            if((classlist.charAt(j)+"").equals("0") || (classlist.charAt(j)+"").equals("1") || (classlist.charAt(j)+"").equals("2")){
+                                cn++;
+                                int pta = Integer.parseInt(classlist.charAt(j)+"");
+                                switch(pta){
+                                    case 0:
+                                        row.getCustomElements().setValueLocal("CN" + ((cn < 10) ? ("0"+cn) : (cn)), "PRESENT");
+                                        Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "PRESENT");
+                                        break;
+                                    case 1:
+                                        row.getCustomElements().setValueLocal("CN" + ((cn < 10) ? ("0"+cn) : (cn)), "TARDY");
+                                        Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "TARDY");
+                                        break;
+                                    case 2:
+                                        row.getCustomElements().setValueLocal("CN" + ((cn < 10) ? ("0"+cn) : (cn)), "ABSENT");
+                                        Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "ABSENT");
+                                        break;
+                                }
+                            }
+                        }
+
+                        se.setRow(row);
+                    }
+
+                    deleteFile(LogActivity.OUTPUTFILENAME);
 
                     DialogFragment dfrag = new ActionCompleteDialogFragment();
                     dfrag.show(getFragmentManager(), "Tag");
@@ -358,5 +424,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     "Not connected to Internet.",
                     Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onGoBack(DialogFragment dialog) {
+        Intent i = new Intent(getApplicationContext(), HomeActivity.class);
+        startActivity(i);
+        finish();
     }
 }

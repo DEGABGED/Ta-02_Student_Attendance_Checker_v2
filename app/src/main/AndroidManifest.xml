@@ -40,6 +40,10 @@
             android:name=".LogActivity"
             android:label="@string/title_activity_log" >
         </activity>
+        <activity
+            android:name=".ListActivity"
+            android:label="@string/title_activity_list" >
+        </activity>
     </application>
 
 </manifest>
