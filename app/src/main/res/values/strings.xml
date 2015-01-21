@@ -54,4 +54,7 @@
         <item>Ta-29</item>
         <item>Ta-30</item>
     </string-array>
+
+    <string name="title_activity_view">ViewActivity</string>
+
 </resources>

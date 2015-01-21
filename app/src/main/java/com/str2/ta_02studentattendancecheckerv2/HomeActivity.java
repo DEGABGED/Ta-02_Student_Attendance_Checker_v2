@@ -1,6 +1,9 @@
 package com.str2.ta_02studentattendancecheckerv2;
 
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -50,13 +53,39 @@ public class HomeActivity extends ActionBarActivity {
 
     public void onLogButtonClick(View view){
         Intent i = new Intent(getApplicationContext(), LogActivity.class);
-        startActivity(i);
+        PendingIntent pendingIntent =
+                TaskStackBuilder.create(this)
+                        // add all of DetailsActivity's parents to the stack,
+                        // followed by DetailsActivity itself
+                        .addNextIntentWithParentStack(i)
+                        .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setContentIntent(pendingIntent);
+        try {
+            pendingIntent.send();
+        } catch(PendingIntent.CanceledException ce){
+            Log.i(TAG, ce.toString());
+        }
         finish();
     }
 
     public void onSendButtonClick(View view){
         Intent i = new Intent(getApplicationContext(), SendDataActivity.class);
-        startActivity(i);
+        PendingIntent pendingIntent =
+                TaskStackBuilder.create(this)
+                        // add all of DetailsActivity's parents to the stack,
+                        // followed by DetailsActivity itself
+                        .addNextIntentWithParentStack(i)
+                        .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setContentIntent(pendingIntent);
+        try {
+            pendingIntent.send();
+        } catch(PendingIntent.CanceledException ce){
+            Log.i(TAG, ce.toString());
+        }
         finish();
     }
 

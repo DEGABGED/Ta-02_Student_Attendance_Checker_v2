@@ -34,15 +34,27 @@
         </activity>
         <activity
             android:name=".SendDataActivity"
-            android:label="@string/title_activity_send_data" >
+            android:label="@string/title_activity_send_data"
+            android:parentActivityName=".HomeActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".HomeActivity" />
         </activity>
         <activity
             android:name=".LogActivity"
-            android:label="@string/title_activity_log" >
+            android:label="@string/title_activity_log"
+            android:parentActivityName=".HomeActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".HomeActivity" />
         </activity>
         <activity
-            android:name=".ListActivity"
-            android:label="@string/title_activity_list" >
+            android:name=".ViewActivity"
+            android:label="@string/title_activity_view"
+            android:parentActivityName=".HomeActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".HomeActivity" />
         </activity>
     </application>
 
