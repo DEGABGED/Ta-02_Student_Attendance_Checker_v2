@@ -211,7 +211,7 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                             .authorizationHeaderAccessMethod())
                             .setFromTokenResponse(new TokenResponse().setAccessToken(token)));
                     Log.i(TAG, token);
-                    se = new SheetEdit(sheetService, new PrintStream(System.out));
+                    se = new SheetEdit(sheetService);
                     chooseSpreadsheet();
                 }
             } catch (IOException e) {
@@ -285,6 +285,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 } catch (IOException io){
                     Log.e(TAG, "An IO exception occurred");
                     Log.i(TAG, io.toString());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "Sorry, an error occurred. Try checking your internet connectivity.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             } else {
                 //it's a worksheet; start writing
@@ -303,6 +309,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 } catch (IOException io){
                     Log.e(TAG, "An IO exception occurred");
                     Log.i(TAG, io.toString());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "Sorry, an error occurred. Try checking your internet connectivity.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
             return null;
@@ -327,6 +339,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
         } catch (IOException io){
             Log.e(TAG, "An IO exception occurred");
             Log.i(TAG, io.toString());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Sorry, an error occurred. Try checking your internet connectivity.", Toast.LENGTH_SHORT).show();
+               }
+            });
         }
     }
 
@@ -430,6 +448,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 } catch (IOException io){
                     Log.e(TAG, "An IO exception occurred");
                     Log.i(TAG, io.toString());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "Sorry, an error occurred. Try checking your internet connectivity.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
         });

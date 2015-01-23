@@ -1,5 +1,6 @@
 package com.str2.ta_02studentattendancecheckerv2;
 
+import android.app.DialogFragment;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 
-public class HomeActivity extends ActionBarActivity {
+public class HomeActivity extends ActionBarActivity implements ConfirmDeleteDialogFragment.ConfirmDeleteDialogListener {
     String TAG = "HomeActivity";
 
     @Override
@@ -123,6 +124,12 @@ public class HomeActivity extends ActionBarActivity {
     }
 
     public void onResetClick(View view){
+        DialogFragment dfrag = new ConfirmDeleteDialogFragment();
+        dfrag.show(getFragmentManager(), TAG);
+    }
+
+    @Override
+    public void onDataDelete(DialogFragment dialog) {
         deleteFile(LogActivity.OUTPUTFILENAME);
         Toast.makeText(this, "Local data deleted.", Toast.LENGTH_SHORT).show();
     }
