@@ -129,7 +129,7 @@ public class LogActivity extends ActionBarActivity implements ActionCompleteDial
         Log.i(TAG, finalOutput);
 
         try {
-            ArrayList<Byte> bytearraylist = new ArrayList<Byte>();
+            ArrayList<Byte> bytearraylist = new ArrayList<>();
 
             try {
                 //File Data Re-write

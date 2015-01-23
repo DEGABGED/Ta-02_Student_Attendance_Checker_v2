@@ -199,16 +199,18 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     "Spreadsheet has been chosen. Please wait in case a worksheet requires to be chosen.",
                     Toast.LENGTH_SHORT).show();
         }
-        new ChooseWorksheetTask(isSpreadsheet, index).execute();
+        new ChooseWorksheetTask(isSpreadsheet, index, getApplicationContext()).execute();
     }
 
     public class ChooseWorksheetTask extends AsyncTask<Void, Void, Void>{
         boolean isSpreadsheet;
         int index;
+        Context context;
 
-        ChooseWorksheetTask(boolean isSpreadsheet, int index){
+        ChooseWorksheetTask(boolean isSpreadsheet, int index, Context context){
             this.isSpreadsheet = isSpreadsheet;
             this.index = index;
+            this.context = context;
         }
 
 
@@ -249,6 +251,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     se.loadWorksheet(spreadsheet, index);
                     //writeOnSheet();
                     se.showRows();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(context, "Worksheet loaded.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");
                     Log.i(TAG, serex.toString());
@@ -258,10 +266,6 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 }
             }
             return null;
-        }
-
-        protected void onPostExecute(){
-            Toast.makeText(SendDataActivity.this, "Data is ready to be sent.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -274,10 +278,10 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 Log.i("Sheetlist", se.showSheet(j, sheetlist));
             }
 
-            DialogFragment dfrag = new SheetChoiceDialogFragment();
-            SheetChoiceDialogFragment.setSheetlist(sheets);
-            SheetChoiceDialogFragment.isSpreadsheet = true;
-            dfrag.show(getFragmentManager(), "Tag");
+                DialogFragment dfrag = new SheetChoiceDialogFragment();
+                SheetChoiceDialogFragment.setSheetlist(sheets);
+                SheetChoiceDialogFragment.isSpreadsheet = true;
+                dfrag.show(getFragmentManager(), "Tag");
         } catch (ServiceException serex){
             Log.e(TAG, "A service exception occurred");
             Log.i(TAG, serex.toString());
@@ -336,11 +340,6 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     actualText = new String(finalByteArray, "UTF-8");
                     Log.i(TAG, Arrays.toString(finalByteArray));
                     Log.i(TAG, "Text in file: " + actualText);
-                } catch (FileNotFoundException fnfe){
-                    Log.i(TAG, fnfe.toString());
-                } catch (IOException ioe){
-                    Log.i(TAG, ioe.toString());
-                }
 
                 ArrayList<String> lines = new ArrayList<>();
                 int previousIndex = 0;
@@ -353,11 +352,10 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
 
                 Log.i(TAG, "no. of lines is "+lines.size());
 
-                try {
                     for(int i = 0; i < lines.size(); i++) {
                         String line = lines.get(i);
                         String subject = line.substring(0, line.indexOf("_"));
-                        String period = line.substring(line.indexOf("_"), line.indexOf("_", line.indexOf("_")+1));
+                        String period = line.substring(line.indexOf("_")+1, line.indexOf("_", line.indexOf("_")+1));
                         String classlist = line.substring(line.indexOf("["), line.indexOf("]"));
 
                         Date date = new Date();
@@ -399,6 +397,13 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
 
                     DialogFragment dfrag = new ActionCompleteDialogFragment();
                     dfrag.show(getFragmentManager(), "Tag");
+                } catch (FileNotFoundException fnfe) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(SendDataActivity.this, "File not found.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 } catch (ServiceException serex){
                     Log.e(TAG, "A service exception occurred");
                     Log.i(TAG, serex.toString());

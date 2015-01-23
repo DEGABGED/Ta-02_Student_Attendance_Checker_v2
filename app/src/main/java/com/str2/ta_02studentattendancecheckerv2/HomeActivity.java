@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -52,12 +53,12 @@ public class HomeActivity extends ActionBarActivity {
     }
 
     public void onLogButtonClick(View view){
-        Intent i = new Intent(getApplicationContext(), LogActivity.class);
+        Intent logIntent = new Intent(getApplicationContext(), LogActivity.class);
         PendingIntent pendingIntent =
                 TaskStackBuilder.create(this)
                         // add all of DetailsActivity's parents to the stack,
                         // followed by DetailsActivity itself
-                        .addNextIntentWithParentStack(i)
+                        .addNextIntentWithParentStack(logIntent)
                         .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -71,49 +72,54 @@ public class HomeActivity extends ActionBarActivity {
     }
 
     public void onSendButtonClick(View view){
-        Intent i = new Intent(getApplicationContext(), SendDataActivity.class);
-        PendingIntent pendingIntent =
-                TaskStackBuilder.create(this)
-                        // add all of DetailsActivity's parents to the stack,
-                        // followed by DetailsActivity itself
-                        .addNextIntentWithParentStack(i)
-                        .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        File f = new File(getFilesDir().getAbsolutePath() + "/" + LogActivity.OUTPUTFILENAME);
+        if(f.exists()){
+            Intent sendIntent = new Intent(getApplicationContext(), SendDataActivity.class);
+            PendingIntent pendingIntent =
+                    TaskStackBuilder.create(this)
+                            // add all of DetailsActivity's parents to the stack,
+                            // followed by DetailsActivity itself
+                            .addNextIntentWithParentStack(sendIntent)
+                            .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setContentIntent(pendingIntent);
-        try {
-            pendingIntent.send();
-        } catch(PendingIntent.CanceledException ce){
-            Log.i(TAG, ce.toString());
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+            builder.setContentIntent(pendingIntent);
+            try {
+                pendingIntent.send();
+            } catch(PendingIntent.CanceledException ce){
+                Log.i(TAG, ce.toString());
+            }
+            finish();
+        } else {
+            Log.i(TAG, "No file");
+            Toast.makeText(getApplicationContext(), "No file found.", Toast.LENGTH_SHORT).show();
         }
-        finish();
+
     }
 
     public void onViewButtonClick(View view){
-        //block of code to read a file
-        try{
-            FileInputStream fis = openFileInput(LogActivity.OUTPUTFILENAME);
-            ArrayList<Byte> bytearraylist = new ArrayList<Byte>();
-            int readInt = 0;
-            readInt = fis.read();
-            while (readInt >= 0) {
-                bytearraylist.add(Byte.valueOf((byte) readInt));
-                readInt = fis.read();
-            }
+            File f = new File(getFilesDir().getAbsolutePath() + "/" + LogActivity.OUTPUTFILENAME);
+            if(f.exists()){
+                Intent viewIntent = new Intent(getApplicationContext(), ViewActivity.class);
+                PendingIntent pendingIntent =
+                        TaskStackBuilder.create(this)
+                                // add all of DetailsActivity's parents to the stack,
+                                // followed by DetailsActivity itself
+                                .addNextIntentWithParentStack(viewIntent)
+                                .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            byte[] finalByteArray = new byte[bytearraylist.size()];
-            for(int i = 0; i < bytearraylist.size(); ++i){
-                finalByteArray[i] = bytearraylist.get(i);
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+                builder.setContentIntent(pendingIntent);
+                try {
+                    pendingIntent.send();
+                } catch (PendingIntent.CanceledException ce) {
+                    Log.i(TAG, ce.toString());
+                }
+                finish();
+            } else {
+                Log.i(TAG, "No file");
+                Toast.makeText(getApplicationContext(), "No file found.", Toast.LENGTH_SHORT).show();
             }
-
-            String actualText = new String(finalByteArray, "UTF-8");
-            Log.i(TAG, Arrays.toString(finalByteArray));
-            Log.i(TAG, "Text in file: " + actualText);
-        } catch (FileNotFoundException fnfe){
-            Log.i(TAG, fnfe.toString());
-        } catch (IOException ioe){
-            Log.i(TAG, ioe.toString());
-        }
     }
 
     public void onResetClick(View view){
