@@ -105,6 +105,14 @@ public class SheetEdit {
         service.setUserCredentials(username, password);
     }
 
+    public URL getListFeedUrl(){
+        if(listFeedUrl != null) {
+            return listFeedUrl;
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Displays the given list of entries and prompts the user to select the index
      * of one of the entries. NOTE: The displayed index is 1-based and is

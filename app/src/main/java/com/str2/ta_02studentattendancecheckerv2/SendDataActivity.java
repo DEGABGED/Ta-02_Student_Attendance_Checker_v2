@@ -26,6 +26,7 @@ import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.spreadsheet.ListEntry;
 import com.google.gdata.data.spreadsheet.SpreadsheetEntry;
+import com.google.gdata.util.InvalidEntryException;
 import com.google.gdata.util.ServiceException;
 
 import java.io.FileInputStream;
@@ -57,6 +58,12 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
 
     static TextView nEmail;
     static TextView nSpreadsheet;
+    static TextView nWorksheet;
+
+    static boolean isMultipleWorksheets = false;
+
+    GetUsernameTask gut;
+    ChooseWorksheetTask cwt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +72,33 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
 
         nEmail = (TextView) findViewById(R.id.nEmail);
         nSpreadsheet = (TextView) findViewById(R.id.nSpreadsheet);
+        nWorksheet = (TextView) findViewById(R.id.nWorksheet);
     }
 
+    @Override
+    protected void onDestroy(){
+        Log.i(TAG, "destroysed");
+        if(gut != null){
+            gut.cancel(true);
+        }
+        if(cwt != null){
+            cwt.cancel(true);
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onPause(){
+        Log.i(TAG, "paused");
+        Log.i(TAG, "canceled");
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop(){
+        Log.i(TAG, "stoped");
+        super.onStop();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -111,13 +143,14 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        nEmail.setText(nEmail.getText() + email);
+                        nEmail.setText("email: " + email);
                     }
                 });
                 Toast.makeText(this.getApplicationContext(),
                         "Account has been chosen. Please wait for a dialog to pop up for choosing the destination spreadsheet.",
                         Toast.LENGTH_SHORT).show();
-                new GetUsernameTask(SendDataActivity.this, email, scope).execute();
+                gut = new GetUsernameTask(SendDataActivity.this, email, scope);
+                gut.execute();
             } else if (resultCode == RESULT_CANCELED) {
                 // The account picker dialog closed without selecting an account.
                 // Notify users that they must pick an account to proceed.
@@ -194,23 +227,24 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
     @Override
     public void onSheetClick(DialogFragment dialog, boolean isSpreadsheet, int index) {
         if(isSpreadsheet) {
-                    nSpreadsheet.setText(nSpreadsheet.getText() + "" + sheets[index]);
+                    nSpreadsheet.setText("spreadsheet: " + "" + sheets[index]);
             Toast.makeText(this.getApplicationContext(),
                     "Spreadsheet has been chosen. Please wait in case a worksheet requires to be chosen.",
                     Toast.LENGTH_SHORT).show();
         }
-        new ChooseWorksheetTask(isSpreadsheet, index, getApplicationContext()).execute();
+        cwt = new ChooseWorksheetTask(isSpreadsheet, index, this);
+        cwt.execute();
     }
 
     public class ChooseWorksheetTask extends AsyncTask<Void, Void, Void>{
         boolean isSpreadsheet;
         int index;
-        Context context;
+        Activity activity;
 
-        ChooseWorksheetTask(boolean isSpreadsheet, int index, Context context){
+        ChooseWorksheetTask(boolean isSpreadsheet, int index, Activity activity){
             this.isSpreadsheet = isSpreadsheet;
             this.index = index;
-            this.context = context;
+            this.activity = activity;
         }
 
 
@@ -222,10 +256,17 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     spreadsheet = se.loadSpreadsheet(index);
                     Log.i(TAG, "Spreadsheet chosen: " + sheets[index]);
                     if(spreadsheet.getWorksheets().size() == 1){
+                        isMultipleWorksheets = false;
                         se.loadWorksheet(spreadsheet, 0);
-                        //writeOnSheet();
-                        se.showRows();
+                        Log.i(TAG, "just 1 worksheet");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "Worksheet loaded.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     } else {
+                        isMultipleWorksheets = true;
                         List worksheets = spreadsheet.getWorksheets();
                         wsheets = new CharSequence[worksheets.size()];
                         for (int j = 0; j < worksheets.size(); j++) {
@@ -249,12 +290,11 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 //it's a worksheet; start writing
                 try {
                     se.loadWorksheet(spreadsheet, index);
-                    //writeOnSheet();
-                    se.showRows();
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(context, "Worksheet loaded.", Toast.LENGTH_SHORT).show();
+                            nWorksheet.setText("worksheet: " + wsheets[index]);
+                            Toast.makeText(getApplicationContext(), "Worksheet loaded.", Toast.LENGTH_SHORT).show();
                         }
                     });
                 } catch (ServiceException serex){
@@ -277,7 +317,6 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 sheets[j] = se.showSheet(j, sheetlist);
                 Log.i("Sheetlist", se.showSheet(j, sheetlist));
             }
-
                 DialogFragment dfrag = new SheetChoiceDialogFragment();
                 SheetChoiceDialogFragment.setSheetlist(sheets);
                 SheetChoiceDialogFragment.isSpreadsheet = true;
@@ -290,32 +329,6 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
             Log.i(TAG, io.toString());
         }
     }
-
-    /*
-    public static void chooseWorksheet(){
-        try {
-            spreadsheet = se.loadSpreadsheet(sheetIndex);
-            Log.i(TAG, "onSheetChoose: "+sheets[sheetIndex]);
-            if(spreadsheet.getWorksheets().size() == 1){
-                sheetIndex = 0;
-                writeOnSheet();
-            } else {
-                List worksheets = spreadsheet.getWorksheets();
-                wsheets = new CharSequence[worksheets.size()];
-                for (int j = 0; j < worksheets.size(); j++) {
-                    wsheets[j] = se.showSheet(j, worksheets);
-                    Log.i("Sheetlist", se.showSheet(j, worksheets));
-                }
-            }
-        } catch (ServiceException serex){
-            Log.e(TAG, "A service exception occurred");
-            Log.i(TAG, serex.toString());
-        } catch (IOException io){
-            Log.e(TAG, "An IO exception occurred");
-            Log.i(TAG, io.toString());
-        }
-    }
-    */
 
     public void writeOnSheet(View view){
         Thread thr = new Thread(new Runnable() {
@@ -401,7 +414,14 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(SendDataActivity.this, "File not found.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), "File not found.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } catch (InvalidEntryException iee) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "Wrong spreadsheet/worksheet or sheet format. Go back and try again.", Toast.LENGTH_SHORT).show();
                         }
                     });
                 } catch (ServiceException serex){
@@ -413,11 +433,44 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                 }
             }
         });
-        thr.start();
+        if(se != null){
+            if((se.getListFeedUrl() != null) || (!isMultipleWorksheets)) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Sending data...", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                thr.start();
+            } else {
+                Log.i(TAG, "worksheet not loaded yet");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Please choose worksheet first.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        } else {
+            Log.i(TAG, "se not loaded yet");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Please choose spreadsheet first.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
     }
 
     public void onAccChooseClick(View view){
         if(isInternetPresent()){
+            if(gut != null){
+                gut.cancel(true);
+            }
+            if(cwt != null){
+                cwt.cancel(true);
+            }
             String[] accountTypes = new String[]{"com.google"};
             Intent intent = AccountPicker.newChooseAccountIntent(null, null,
                     accountTypes, false, null, null, null, null);
