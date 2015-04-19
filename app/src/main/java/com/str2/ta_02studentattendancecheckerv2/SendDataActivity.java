@@ -227,9 +227,14 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
     @Override
     public void onSheetClick(DialogFragment dialog, boolean isSpreadsheet, int index) {
         if(isSpreadsheet) {
-                    nSpreadsheet.setText("spreadsheet: " + "" + sheets[index]);
+            nSpreadsheet.setText("spreadsheet: " + sheets[index]);
             Toast.makeText(this.getApplicationContext(),
                     "Spreadsheet has been chosen. Please wait in case a worksheet requires to be chosen.",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            nWorksheet.setText("worksheet: " + wsheets[index]);
+            Toast.makeText(this.getApplicationContext(),
+                    "Please wait for the worksheet to load.",
                     Toast.LENGTH_SHORT).show();
         }
         cwt = new ChooseWorksheetTask(isSpreadsheet, index, this);
@@ -299,7 +304,6 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            nWorksheet.setText("worksheet: " + wsheets[index]);
                             Toast.makeText(getApplicationContext(), "Worksheet loaded.", Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -369,8 +373,8 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                     }
 
                     actualText = new String(finalByteArray, "UTF-8");
-                    Log.i(TAG, Arrays.toString(finalByteArray));
-                    Log.i(TAG, "Text in file: " + actualText);
+                    //Log.i(TAG, Arrays.toString(finalByteArray));
+                    //Log.i(TAG, "Text in file: " + actualText);
 
                 ArrayList<String> lines = new ArrayList<>();
                 int previousIndex = 0;
@@ -407,15 +411,15 @@ public class SendDataActivity extends ActionBarActivity implements SheetChoiceDi
                                 switch(pta){
                                     case 0:
                                         row.getCustomElements().setValueLocal("CN" + ((cn < 10) ? ("0"+cn) : (cn)), "PRESENT");
-                                        Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "PRESENT");
+                                        //Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "PRESENT");
                                         break;
                                     case 1:
                                         row.getCustomElements().setValueLocal("CN" + ((cn < 10) ? ("0"+cn) : (cn)), "TARDY");
-                                        Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "TARDY");
+                                        //Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "TARDY");
                                         break;
                                     case 2:
                                         row.getCustomElements().setValueLocal("CN" + ((cn < 10) ? ("0"+cn) : (cn)), "ABSENT");
-                                        Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "ABSENT");
+                                        //Log.i(TAG, "CN" + ((cn < 10) ? ("0"+cn) : (cn)) + "ABSENT");
                                         break;
                                 }
                             }
